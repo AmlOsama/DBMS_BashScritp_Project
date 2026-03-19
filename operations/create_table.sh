@@ -1,7 +1,7 @@
 #!/bin/bash
 
 read -p "Enter table name: " table_name
-while [[ -f "./databases/test/${table_name}.meta" || ! "$table_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]
+while [[ -d "./databases/test/${table_name}" || ! "$table_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]
 do
     echo "Table '$table_name' already exists or has an invalid name. Please choose a different name."
     read -p "Enter table name: " table_name
@@ -21,10 +21,10 @@ do
     columns=""
     for ((i=1; i<=attributes; i++)) 
     do
-        read -p "Enter name of attribute $i: " attr_name
-        while [[ -z "$attr_name" || "$attr_name" =~ [[:space:]] || "$attr_name" == *:* || "$attr_name" == *$'\n'* || ! "$attr_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]];
+        read -r -p "Enter name of attribute $i: " attr_name
+        while [[ ! "$attr_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ || "$columns" =~ (^|\\n)"$attr_name": ]];
         do
-            echo "Invalid input. Please enter a valid attribute name"
+            echo "Attribute '$attr_name' already exists or has an invalid name. Please choose a different name."
             read -p "Enter name of attribute $i: " attr_name
         done
         echo "Choose data type for $attr_name:"
