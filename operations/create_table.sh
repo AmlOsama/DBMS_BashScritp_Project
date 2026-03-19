@@ -1,17 +1,17 @@
 #!/bin/bash
 
-read -p "Enter table name: " table_name
+read -r  -p "Enter table name: " table_name
 while [[ -d "./databases/test/${table_name}" || ! "$table_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]
 do
     echo "Table '$table_name' already exists or has an invalid name. Please choose a different name."
-    read -p "Enter table name: " table_name
+    read -r -p "Enter table name: " table_name
 done
 
-read -p "Enter number of attributes: " attributes
+read -r -p "Enter number of attributes: " attributes
 while ! [[ "$attributes" =~ ^[1-9][0-9]*$ ]]
 do
     echo "Invalid input. Please enter a positive integer for the number of attributes."
-    read -p "Enter number of attributes: " attributes
+    read -r -p "Enter number of attributes: " attributes
 done
 
 pk_flag=true
@@ -25,7 +25,7 @@ do
         while [[ ! "$attr_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ || "$columns" =~ (^|\\n)"$attr_name": ]];
         do
             echo "Attribute '$attr_name' already exists or has an invalid name. Please choose a different name."
-            read -p "Enter name of attribute $i: " attr_name
+            read -r -p "Enter name of attribute $i: " attr_name
         done
         echo "Choose data type for $attr_name:"
         select data_type in "string" "int";
@@ -43,7 +43,7 @@ do
                 ;;
             esac
         done 
-        read -p "Is this a primary key? (y/n): " is_pk
+        read -r -p "Is this a primary key? (y/n): " is_pk
         if [[ $is_pk == "y" ]]; 
         then
             is_pk="true"
