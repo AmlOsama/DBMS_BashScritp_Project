@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # DBMS Main Entry Point
-source ./menus/main_menu.sh
+source ./menu/db_menu.sh
 
-while true; do
-  source ./menus/main_menu.sh
-done
+# while true; do
+#   source ./menu/main_menu.sh
+# done
 
