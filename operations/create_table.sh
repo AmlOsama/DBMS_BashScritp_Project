@@ -43,17 +43,24 @@ do
                 ;;
             esac
         done 
-        read -r -p "Is this a primary key? (y/n): " is_pk
-        if [[ $is_pk == "y" ]]; 
+
+        if [[ $pk_flag == true ]];
         then
-            is_pk="true"
-            pk_flag=false
+            read -r -p "Is this a primary key? (y/n): " is_pk
+            if [[ $is_pk == "y" ]];
+            then
+                is_pk="true"
+                pk_flag=false
             else
+                is_pk="false"
+            fi
+        else
             is_pk="false"
         fi
 
         columns+="$attr_name:$attr_type:$is_pk\n"
     done
+
     if [[ $pk_flag == true ]];
     then
         echo "At least one primary key is required. Please enter the attributes again."
