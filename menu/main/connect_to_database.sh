@@ -16,6 +16,10 @@ select db_name in "${db_names[@]}" "Cancel"; do
     
     export CURRENT_DB="$db_name"
     export CURRENT_DB_PATH="$DB_DIR/$db_name"
+    echo ""
+    echo "✔ Connected to database '$db_name' successfully."
+    echo ""
+    read -rp "Press Enter to continue..."
     
     source ./main/db_menu.sh
     break
