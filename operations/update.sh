@@ -9,7 +9,7 @@ tables=$(ls "./databases/$current_db" 2>/dev/null)
 
 if [ -z "$tables" ]; then
     echo "No tables found in $current_db."
-    exit 1
+    source "./menu/db_menu.sh"
 fi
 
 select table in $tables; do
@@ -31,7 +31,7 @@ pk_row=$(awk -F: '$3 == "true" { print NR }' "$meta_file")
 
 if [[ -z "$pk_row" ]]; then
     echo "Error: No Primary Key defined in metadata."
-    exit 1
+    source "./menu/db_menu.sh"
 fi
 
 echo "The primary key is defined at column position: $pk_row"
@@ -42,7 +42,7 @@ while [[ -z "$key_value" ]]; do
 
     if [[ "$key_value" == "quit" ]]; then
         echo "Operation cancelled."
-        exit 0
+        source "./menu/db_menu.sh"
     fi
 
     target_line=$(awk -F: -v pk="$pk_row" -v kv="$key_value" '$pk == kv { print NR; exit }' "$data_file")
