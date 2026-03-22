@@ -1,8 +1,8 @@
 #!/bin/bash
 
 
-#DB_DIR="$(dirname "$0")/databases"
-#mkdir -p "$DB_DIR" 
+DB_DIR="$(dirname "$0")/databases"
+mkdir -p "$DB_DIR" 
 
 PS3=$'\nChoose an option [1-5]: '
 while true; do
@@ -15,19 +15,19 @@ while true; do
         do 
         case $choice in
             "Create Database")
-            source ./main/create_database.sh
+            source ./menu/main/create_database.sh
             break
             ;;
             "List Databases")
-            source ./main/list_databases.sh
+            source ./menu/main/list_databases.sh
             break
             ;;
             "Connect To Database")
-            source ./main/connect_to_database.sh
+            source ./menu/main/connect_to_database.sh
             break
             ;;
             "Drop Database")
-            source ./main/drop_database.sh
+            source ./menu/main/drop_database.sh
             break
             ;;
             "Exit")    
