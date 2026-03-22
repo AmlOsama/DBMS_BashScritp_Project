@@ -4,9 +4,10 @@
 DB_DIR="$(dirname "$0")/databases"
 mkdir -p "$DB_DIR" 
 
-PS3=$'\nChoose an option [1-5]: '
+PS3=$'\nChoose an option [1,2,3,....]: '
 while true; do
  clear
+    echo "=============================== Current Database: ${CURRENT_DB:-None} ==============================="
     echo "==============================="
     echo "   Bash DBMS - Main Menu"
     echo "==============================="
@@ -33,7 +34,7 @@ while true; do
             "Exit")    
             echo "Goodbye!"; exit 0 ;;
             *) 
-            echo "Invalid option. Enter 1-5." 
+            echo "Invalid option." 
             ;;
             
         esac

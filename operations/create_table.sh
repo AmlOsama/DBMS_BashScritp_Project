@@ -1,7 +1,7 @@
 #!/bin/bash
 
 read -r  -p "Enter table name: " table_name
-while [[ -d "./databases/test/${table_name}" || ! "$table_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]
+while [[ -f "./databases/${CURRENT_DB}/${table_name}.meta" || ! "$table_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]
 do
     echo "Table '$table_name' already exists or has an invalid name. Please choose a different name."
     read -r -p "Enter table name: " table_name
@@ -67,9 +67,10 @@ do
     fi
 done
 
-mkdir -p "./databases/test/${table_name}"
-touch "./databases/test/${table_name}/${table_name}.meta"
+touch "./databases/${CURRENT_DB}/${table_name}.meta"
 
-echo -e "$columns" > "./databases/test/${table_name}/${table_name}.meta"
+echo -e "$columns" > "./databases/${CURRENT_DB}/${table_name}.meta"
 echo "Table '$table_name' created in current DB."
+echo ""
+read -rp "Press Enter to continue..."
 source ./menu/db_menu.sh
