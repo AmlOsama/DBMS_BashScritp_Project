@@ -43,8 +43,6 @@ if [[ -z "$pk_row" ]]; then
     exit 1
 fi
 
-echo "The primary key is defined at column position: $pk_row"
-
 # 3. Find the Line Number in the Data File
 while [[ -z "$key_value" ]]; do
     read -p "Enter the Key value of the row you wish to update, or 'quit' to exit: " key_value
@@ -71,6 +69,8 @@ new_record=""
 col_index=0
 
 while IFS=: read -r col_name col_type is_pk <&3; do
+    [[ -z "$col_name" ]] && continue
+
     col_index=$(( col_index + 1 ))
 
     if [[ "$is_pk" == "true" ]]; then
@@ -109,3 +109,7 @@ sed -i "${target_line}s/.*/$new_record/" "$data_file"
 echo "-----------------------------------"
 echo "Success: Line $target_line has been updated."
 echo "New Record: $new_record"
+echo "-----------------------------------"
+echo ""
+read -rp "Press Enter to continue..."
+source "./menu/db_menu.sh"

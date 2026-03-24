@@ -11,3 +11,4 @@ done
 [ $found -eq 0 ] && echo "  (no tables found)"
 echo ""
 read -rp "Press Enter to continue..."
+source "./menu/db_menu.sh"

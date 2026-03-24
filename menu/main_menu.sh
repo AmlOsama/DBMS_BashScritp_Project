@@ -12,23 +12,27 @@ while true; do
     echo "   Bash DBMS - Main Menu"
     echo "==============================="
 
-        select choice in "Create Database" "List Databases" "Connect To Database" "Drop Database" "Exit"
+        select choice in "Create Database" "List Databases" "Connect To Database" "Disconnect Database" "Drop Database" "Exit"
         do 
         case $choice in
             "Create Database")
-            source ./menu/main/create_database.sh
+            source ./operations/main/create_database.sh
             break
             ;;
             "List Databases")
-            source ./menu/main/list_databases.sh
+            source ./operations/main/list_databases.sh
             break
             ;;
             "Connect To Database")
-            source ./menu/main/connect_to_database.sh
+            source ./operations/main/connect_to_database.sh
+            break
+            ;;
+            "Disconnect Database")
+            source ./operations/main/disconnect_database.sh
             break
             ;;
             "Drop Database")
-            source ./menu/main/drop_database.sh
+            source ./operations/main/drop_database.sh
             break
             ;;
             "Exit")    
