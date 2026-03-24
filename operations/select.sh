@@ -1,20 +1,20 @@
 #!/bin/bash
 
-# --- Configuration & Setup ---
-current_db="test"
+echo "Available tables in database '$CURRENT_DB':"
 
-# 1. List and Select Table
-echo "Available tables in database '$current_db':"
-tables=$(ls "./databases/$current_db" 2>/dev/null)
+# 1. Get clean names (strips the path and the .meta extension)
+# This pipes the files through sed to clean them up instantly
+tables=$(ls "$CURRENT_DB_PATH"/*.meta 2>/dev/null | xargs -n 1 basename -s .meta)
 
 if [ -z "$tables" ]; then
-    echo "No tables found in $current_db."
+    echo "No tables found in $CURRENT_DB."
     source "./menu/db_menu.sh"
+    exit 1
 fi
 
-select table in $tables; do
-    if [[ -n "$table" ]]; then
-        selected_table="$table"
+# 2. Let Bash's 'select' split them by line/space automatically
+select selected_table in $tables; do
+    if [[ -n "$selected_table" ]]; then
         echo "You selected: $selected_table"
         break
     else
@@ -23,36 +23,73 @@ select table in $tables; do
 done
 
 # Define Paths
-meta_file="./databases/$current_db/$selected_table/$selected_table.meta"
-data_file="./databases/$current_db/$selected_table/$selected_table"
-
+meta_file="$CURRENT_DB_PATH/$selected_table.meta"
+#check if "datafile path" exists if not return to db_menu
+if [[ -f "$CURRENT_DB_PATH/$selected_table" ]]
+then
+    data_file="$CURRENT_DB_PATH/$selected_table"
+else 
+    echo "The selected table is empty."
+    echo ""
+    read -rp "Press Enter to continue..."
+    source ./menu/db_menu.sh
+fi
 # 2. Show all available fields in the table
-
 available_fields=$(awk -F: '{print $1}' "$meta_file")
 
 select field in $available_fields; do
     if [[ -n "$field" ]]; then
         selected_field="$field"
         echo "You selected: $selected_field"
-        read -p "Enter the new value for $selected_field: " search_value
-        #display all the data in the table according to the selected field and the new value
+        read -p "Enter the value for $selected_field: " search_value
+        
+        # Display data from data_file based on meta_file definitions
         awk -F: -v field="$selected_field" -v value="$search_value" '
         BEGIN {
-            OFS=":"
+            print "====================================="
+            print "Matching records for [" field " = " value "]:"
+            print "====================================="
+            OFS="\t"
         }
-        NR==FNR {
+        
+        NR == FNR {
+            fields[FNR] = $1  # Save field name for headers
             if ($1 == field) {
-                field_num = NR
+                field_num = FNR
             }
             next
         }
+        
+        FNR == 1 {
+            for (i=1; i<=length(fields); i++) {
+                printf "%s\t", fields[i]
+            }
+            print "\n-------------------------------------"
+        }
+        
         {
             if ($field_num == value) {
-                print $0
+                for (i=1; i<=NF; i++) {
+                    printf "%s\t", $i
+                }
+                print ""
+                match_count++
             }
-        }' "$meta_file" "$data_file"
+        }
+        
+        END {
+            if (match_count == 0) {
+                print "(No matching records found)"
+            }
+            print "====================================="
+        }
+        ' "$meta_file" "$data_file"
+        
         break
     else
         echo "Invalid selection. Please try again."
     fi
 done
+echo ""
+read -rp "Press Enter to continue..."
+source ./menu/db_menu.sh

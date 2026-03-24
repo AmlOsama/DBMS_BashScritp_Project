@@ -21,6 +21,6 @@ select db_name in "${db_names[@]}" "Cancel"; do
     echo ""
     read -rp "Press Enter to continue..."
     
-    source ./main/db_menu.sh
+    source ./menu/db_menu.sh
     break
 done
