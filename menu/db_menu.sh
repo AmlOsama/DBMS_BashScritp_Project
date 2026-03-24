@@ -1,4 +1,4 @@
-
+PS3=$'\nChoose an option [1,2,3,....]: '
 while true; do
  clear
     echo "=============================== Current Database: ${CURRENT_DB:-None} ==============================="
