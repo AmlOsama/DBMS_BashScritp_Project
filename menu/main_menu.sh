@@ -12,7 +12,7 @@ while true; do
     echo "   Bash DBMS - Main Menu"
     echo "==============================="
 
-        select choice in "Create Database" "List Databases" "Connect To Database" "Drop Database" "Exit"
+        select choice in "Create Database" "List Databases" "Connect To Database" "Disconnect Database" "Drop Database" "Exit"
         do 
         case $choice in
             "Create Database")
