@@ -67,8 +67,8 @@ select field in $available_fields; do
             print "\n-------------------------------------"
         }
         
-        {
-            if ($field_num == value) {
+        {   
+            if ($field_num ~ value) {
                 for (i=1; i<=NF; i++) {
                     printf "%s\t", $i
                 }
