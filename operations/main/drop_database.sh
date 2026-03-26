@@ -26,13 +26,12 @@ db_name=$(zenity --list \
 
 [[ $? -ne 0 || -z "$db_name" ]] && return
 
-# Original logic: cannot drop currently connected database
 if [ "$db_name" = "$CURRENT_DB" ]; then
     gui_error "Cannot drop '$db_name' — you are currently connected to it.\nDisconnect first, then drop it."
     return
 fi
 
-# Confirm — original asks "yes/no"
+
 gui_confirm "Are you sure you want to drop '$db_name'?\nThis action is irreversible." || return
 
 rm -rf "$DB_DIR/$db_name"
