@@ -68,6 +68,7 @@ do
 done
 
 touch "./databases/${CURRENT_DB}/${table_name}.meta"
+touch "./databases/${CURRENT_DB}/${table_name}"
 
 echo -e "$columns" > "./databases/${CURRENT_DB}/${table_name}.meta"
 echo "Table '$table_name' created in current DB."
