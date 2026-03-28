@@ -1,42 +1,54 @@
-PS3=$'\nChoose an option [1,2,3,....]: '
+source "$SCRIPT_DIR/menu/gui_helpers.sh"
+
 while true; do
- clear
-    echo "=============================== Current Database: ${CURRENT_DB:-None} ==============================="
-    echo "==============================="
-    echo "   Bash DBMS - Table Menu"
-    echo "==============================="
-    select query in "Create Table" "List Tables" "Drop Table" "Insert into Table" "Select From Table" "Delete From Table" "Update Table" "Back to Main Menu" "Exit"
-    do 
-      case $query in
+    query=$(zenity --list \
+        --title="$(gui_window_title)" \
+        --text="Table Menu  —  Database: <b>$CURRENT_DB</b>" \
+        --column="Action" \
+        --hide-header \
+        --width=380 --height=440 \
+        "Create Table" \
+        "List Tables" \
+        "Drop Table" \
+        "Insert into Table" \
+        "Select From Table" \
+        "Delete From Table" \
+        "Update Table" \
+        "Back to Main Menu" \
+        "Exit" 2>/dev/null)
+
+    [[ $? -ne 0 ]] && query="Back to Main Menu"
+
+    case "$query" in
         "Create Table")
-          source ./operations/create_table.sh
-          ;;
+            source "$SCRIPT_DIR/operations/create_table.sh"
+            ;;
         "List Tables")
-          source ./operations/list_tables.sh
-          ;;
+            source "$SCRIPT_DIR/operations/list_tables.sh"
+            ;;
         "Drop Table")
-          source ./operations/drop_table.sh
-          ;;
+            source "$SCRIPT_DIR/operations/drop_table.sh"
+            ;;
         "Insert into Table")
-          source ./operations/insert.sh
-          ;;
+            source "$SCRIPT_DIR/operations/insert.sh"
+            ;;
         "Select From Table")
-          source ./operations/select.sh
-          ;;
+            source "$SCRIPT_DIR/operations/select.sh"
+            ;;
         "Delete From Table")
-          source ./operations/delete.sh
-          ;;
+            source "$SCRIPT_DIR/operations/delete.sh"
+            ;;
         "Update Table")
-          source ./operations/update.sh
-          ;;
+            source "$SCRIPT_DIR/operations/update.sh"
+            ;;
         "Back to Main Menu")
-          source ./menu/main_menu.sh
-          ;;
-        "Exit")    
-              echo "Goodbye!"; exit 0 ;;
-        *) 
-              echo "Invalid option. Enter 1-5." 
-          ;;
-      esac
-  done
+            source "$SCRIPT_DIR/menu/main_menu.sh"
+            return
+            ;;
+        "Exit")
+            gui_confirm "Are you sure you want to exit?" && exit 0
+            ;;
+        *)
+            ;;
+    esac
 done
