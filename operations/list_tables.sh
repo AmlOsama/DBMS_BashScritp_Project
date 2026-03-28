@@ -1,48 +1,41 @@
-:' echo ""
-echo "==============================="
-echo "   Tables in '$CURRENT_DB'"
-echo "==============================="
+#!/bin/bash
+# ============================================================
+#  Shows: table name + all attributes with type and PK flag
+# ============================================================
+
+source "$SCRIPT_DIR/menu/gui_helpers.sh"
 
 found=0
+list_args=()
+
 for meta in "$CURRENT_DB_PATH"/*.meta; do
-    [ -f "$meta" ] && echo "  • $(basename "$meta" .meta)" && found=1
+    [ -f "$meta" ] || continue
+
+    table_name=$(basename "$meta" .meta)
+
+    # Build attributes string name(type)[PK]
+    attributes=""
+    while IFS=: read -r col_name col_type is_pk; do
+        [[ -z "$col_name" ]] && continue
+        if [[ "$is_pk" == "true" ]]; then
+            attributes+="$col_name($col_type)[PK]  "
+        else
+            attributes+="$col_name($col_type)  "
+        fi
+    done < "$meta"
+
+    list_args+=("$table_name" "$attributes")
+    found=1
 done
 
-[ $found -eq 0 ] && echo "  (no tables found)"
-echo ""
-read -rp "Press Enter to continue..."
-source "./menu/db_menu.sh" '
+if [[ $found -eq 0 ]]; then
+    gui_info "No tables found in '$CURRENT_DB'."
+    return
+fi
 
-echo ""
-echo "==============================="
-echo "   Tables in '$CURRENT_DB'"
-echo "==============================="
-
-found=0
-for meta in "$CURRENT_DB_PATH"/*.meta; do
-    if [ -f "$meta" ]; then
-        table_name=$(basename "$meta" .meta)
-        echo "  $table_name"
-        
-        # Read and display attributes in a single line
-        attributes=""
-        while IFS=: read -r col_name col_type is_pk; do
-            if [[ "$is_pk" == "true" ]]; then
-                attributes="$attributes $col_name($col_type)[PK],"
-            else
-                attributes="$attributes $col_name($col_type),"
-            fi
-        done < "$meta"
-        
-        # Remove trailing comma and display
-        attributes=$(echo "$attributes" | sed 's/,$//')
-        echo "     Attributes:$attributes"
-        echo ""
-        found=1
-    fi
-done
-
-[ $found -eq 0 ] && echo "  (no tables found)"
-echo ""
-read -rp "Press Enter to continue..."
-source "./menu/db_menu.sh"
+zenity --list \
+    --title="Tables in '$CURRENT_DB'" \
+    --text="Tables in database: <b>$CURRENT_DB</b>" \
+    --column="Table" --column="Attributes" \
+    --width=680 --height=400 \
+    "${list_args[@]}" 2>/dev/null
