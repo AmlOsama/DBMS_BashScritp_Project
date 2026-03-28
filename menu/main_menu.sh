@@ -1,46 +1,45 @@
 #!/bin/bash
 
+source "$SCRIPT_DIR/menu/gui_helpers.sh"
 
-DB_DIR="$(dirname "$0")/databases"
-mkdir -p "$DB_DIR" 
-
-PS3=$'\nChoose an option [1,2,3,....]: '
 while true; do
- clear
-    echo "=============================== Current Database: ${CURRENT_DB:-None} ==============================="
-    echo "==============================="
-    echo "   Bash DBMS - Main Menu"
-    echo "==============================="
+    choice=$(zenity --list \
+        --title="$(gui_window_title)" \
+        --text="Main Menu" \
+        --column="Action" \
+        --hide-header \
+        --width=380 --height=370 \
+        "Create Database" \
+        "List Databases" \
+        "Connect To Database" \
+        "Disconnect Database" \
+        "Drop Database" \
+        "Exit" 2>/dev/null)
 
-        select choice in "Create Database" "List Databases" "Connect To Database" "Disconnect Database" "Drop Database" "Exit"
-        do 
-        case $choice in
-            "Create Database")
-            source ./operations/main/create_database.sh
-            break
+    # Window closed with ✕
+    [[ $? -ne 0 ]] && choice="Exit"
+
+    case "$choice" in
+        "Create Database")
+            source "$SCRIPT_DIR/operations/main/create_database.sh"
             ;;
-            "List Databases")
-            source ./operations/main/list_databases.sh
-            break
+        "List Databases")
+            source "$SCRIPT_DIR/operations/main/list_databases.sh"
             ;;
-            "Connect To Database")
-            source ./operations/main/connect_to_database.sh
-            break
+        "Connect To Database")
+            source "$SCRIPT_DIR/operations/main/connect_to_database.sh"
             ;;
-            "Disconnect Database")
-            source ./operations/main/disconnect_database.sh
-            break
+        "Disconnect Database")
+            source "$SCRIPT_DIR/operations/main/disconnect_database.sh"
             ;;
-            "Drop Database")
-            source ./operations/main/drop_database.sh
-            break
+        "Drop Database")
+            source "$SCRIPT_DIR/operations/main/drop_database.sh"
             ;;
-            "Exit")    
-            echo "Goodbye!"; exit 0 ;;
-            *) 
-            echo "Invalid option." 
+        "Exit")
+            gui_confirm "Are you sure you want to exit?" && exit 0
             ;;
-            
-        esac
-        done
+        *)
+           
+            ;;
+    esac
 done

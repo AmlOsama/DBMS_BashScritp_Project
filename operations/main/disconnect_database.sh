@@ -1,6 +1,13 @@
+source "$SCRIPT_DIR/menu/gui_helpers.sh"
+
+if [[ -z "$CURRENT_DB" ]]; then
+    gui_error "No database is currently connected."
+    return
+fi
+
+old_db="$CURRENT_DB"
+
 export CURRENT_DB=""
 export CURRENT_DB_PATH=""
-echo "✔ DisConnected from database successfully."
-echo ""
-read -rp "Press Enter to continue..."    
-source ./menu/main_menu.sh
+
+gui_info "✔ Disconnected from database '$old_db' successfully."
