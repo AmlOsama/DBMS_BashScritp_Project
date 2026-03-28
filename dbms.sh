@@ -1,10 +1,13 @@
 #!/bin/bash
+# ============================================================
+#  Bash DBMS — Zenity GUI Entry Point
+# ============================================================
 
-#initialize the database directory if it doesn't exist
-DB_DIR="./databases"
-if [ ! -d "$DB_DIR" ]; then
-    mkdir "$DB_DIR"
-fi
+export SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+export DB_DIR="$SCRIPT_DIR/databases"
+mkdir -p "$DB_DIR"
 
-# DBMS Main Entry Point
-source ./menu/main_menu.sh
+export CURRENT_DB=""
+export CURRENT_DB_PATH=""
+
+source "$SCRIPT_DIR/menu/main_menu.sh"

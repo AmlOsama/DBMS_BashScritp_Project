@@ -1,77 +1,96 @@
 #!/bin/bash
+source "$SCRIPT_DIR/menu/gui_helpers.sh"
 
-read -r  -p "Enter table name: " table_name
-while [[ -f "./databases/${CURRENT_DB}/${table_name}.meta" || ! "$table_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]
-do
-    echo "Table '$table_name' already exists or has an invalid name. Please choose a different name."
-    read -r -p "Enter table name: " table_name
-done
+# ── 1. Table name ────────────────────────────────────────────
+while true; do
+    table_name=$(gui_entry "Create Table" "Enter table name:")
+    [[ $? -ne 0 ]] && return   # cancelled
 
-read -r -p "Enter number of attributes: " attributes
-while ! [[ "$attributes" =~ ^[1-9][0-9]*$ ]]
-do
-    echo "Invalid input. Please enter a positive integer for the number of attributes."
-    read -r -p "Enter number of attributes: " attributes
-done
-
-pk_flag=true
-
-while [[ $pk_flag == true ]]
-do
-    columns=""
-    for ((i=1; i<=attributes; i++)) 
-    do
-        read -r -p "Enter name of attribute $i: " attr_name
-        while [[ ! "$attr_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ || "$columns" =~ (^|\\n)"$attr_name": ]];
-        do
-            echo "Attribute '$attr_name' already exists or has an invalid name. Please choose a different name."
-            read -r -p "Enter name of attribute $i: " attr_name
-        done
-        echo "Choose data type for $attr_name:"
-        select data_type in "string" "int";
-        do
-            case $data_type in
-            "string")
-                attr_type="string"
-                break;
-                ;;
-            "int")        
-                attr_type="int"
-                break;
-                ;;
-            *)        echo "Invalid choice, please select again."
-                ;;
-            esac
-        done 
-
-        if [[ $pk_flag == true ]];
-        then
-            read -r -p "Is this a primary key? (y/n): " is_pk
-            if [[ $is_pk == "y" ]];
-            then
-                is_pk="true"
-                pk_flag=false
-            else
-                is_pk="false"
-            fi
-        else
-            is_pk="false"
-        fi
-
-        columns+="$attr_name:$attr_type:$is_pk\n"
-    done
-
-    if [[ $pk_flag == true ]];
+    if [[ -f "./databases/${CURRENT_DB}/${table_name}.meta" || ! "$table_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; 
     then
-        echo "At least one primary key is required. Please enter the attributes again."
+        gui_error "Table '$table_name' already exists or has an invalid name. Please choose a different name."
+        continue
+    fi
+    break
+done
+
+# ── 2. Number of attributes ───────────────────────────────────
+while true; do
+    attributes=$(gui_entry "Create Table — Columns" \
+        "Table: <b>$table_name</b>\n\nHow many attributes (columns)?")
+    [[ $? -ne 0 ]] && return
+
+    if [[ "$attributes" =~ ^[1-9][0-9]*$ ]]; then
+        break
+    else
+        gui_error "Please enter a positive integer."
     fi
 done
 
-touch "./databases/${CURRENT_DB}/${table_name}.meta"
-touch "./databases/${CURRENT_DB}/${table_name}"
+# ── 3. Collect each attribute ────────
+pk_flag=true
 
-echo -e "$columns" > "./databases/${CURRENT_DB}/${table_name}.meta"
-echo "Table '$table_name' created in current DB."
-echo ""
-read -rp "Press Enter to continue..."
-source ./menu/db_menu.sh
+while [[ $pk_flag == true ]]; do
+    columns=""
+
+    for (( i=1; i<=attributes; i++ )); do
+
+        # ── 3a. Attribute name ──
+        while true; do
+            attr_name=$(gui_entry \
+                "Attribute $i of $attributes" \
+                "Table: <b>$table_name</b>\n\nEnter name for attribute $i:")
+            [[ $? -ne 0 ]] && return
+
+            if [[ ! "$attr_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+                gui_error "Invalid attribute name.\nMust start with a letter or underscore."
+                continue
+            fi
+
+            if echo -e "$columns" | grep -q "^${attr_name}:"; then
+                gui_error "Attribute '$attr_name' already defined. Choose a different name."
+                continue
+            fi
+
+            break
+        done
+
+        # ── 3b. Data type (string | int) ──
+        attr_type=$(zenity --list \
+            --title="Attribute $i — Data Type" \
+            --text="Table: <b>$table_name</b>\nAttribute: <b>$attr_name</b>\n\nChoose data type:" \
+            --radiolist \
+            --column="Select" --column="Type" \
+            --hide-header \
+            --width=340 --height=240 \
+            "TRUE"  "string" \
+            "FALSE" "int" 2>/dev/null)
+        [[ $? -ne 0 || -z "$attr_type" ]] && return
+
+        # ── 3c. Primary Key? ──
+        is_pk="false"
+        if [[ $pk_flag == true ]]; then
+            zenity --question \
+                --title="Primary Key?" \
+                --text="Is <b>$attr_name</b> the primary key?" \
+                --width=340 2>/dev/null
+            if [[ $? -eq 0 ]]; then
+                is_pk="true"
+                pk_flag=false
+            fi
+        fi
+
+        columns+="${attr_name}:${attr_type}:${is_pk}\n"
+    done
+
+    if [[ $pk_flag == true ]]; then
+        gui_error "At least one primary key is required.\nPlease re-enter the attributes."
+    fi
+done
+
+# ── 4. Write .meta and data files ──────────
+touch "$CURRENT_DB_PATH/$table_name.meta"
+touch "$CURRENT_DB_PATH/$table_name"
+echo -e "$columns" > "$CURRENT_DB_PATH/$table_name.meta"
+
+gui_info "✔ Table '$table_name' created in database '$CURRENT_DB'."

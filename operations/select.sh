@@ -1,95 +1,105 @@
 #!/bin/bash
+source "$SCRIPT_DIR/menu/gui_helpers.sh"
 
-echo "Available tables in database '$CURRENT_DB':"
-
-# 1. Get clean names (strips the path and the .meta extension)
-# This pipes the files through sed to clean them up instantly
-tables=$(ls "$CURRENT_DB_PATH"/*.meta 2>/dev/null | xargs -n 1 basename -s .meta)
-
+# ── 1. Pick table ─────────────────────────────────────────────
+tables=$(ls "$CURRENT_DB_PATH"/*.meta 2>/dev/null | xargs -n1 basename -s .meta)
 if [ -z "$tables" ]; then
-    echo "No tables found in $CURRENT_DB."
-    source "./menu/db_menu.sh"
-    exit 1
+    gui_error "No tables found in '$CURRENT_DB'."
+    return
 fi
 
-# 2. Let Bash's 'select' split them by line/space automatically
-select selected_table in $tables; do
-    if [[ -n "$selected_table" ]]; then
-        echo "You selected: $selected_table"
-        break
-    else
-        echo "Invalid selection. Please try again."
-    fi
-done
+list_args=()
+while IFS= read -r t; do list_args+=("FALSE" "$t"); done <<< "$tables"
 
-# Define Paths
+selected_table=$(zenity --list \
+    --title="Select From Table" \
+    --text="Select a table:" \
+    --radiolist \
+    --column="Select" --column="Table" \
+    --width=420 --height=380 \
+    "${list_args[@]}" 2>/dev/null)
+
+[[ $? -ne 0 || -z "$selected_table" ]] && return
+
+
+# ── 2. Resolve paths ──────────────────────────────────────────
 meta_file="$CURRENT_DB_PATH/$selected_table.meta"
-#check if "datafile path" exists if not return to db_menu
-if [[ -f "$CURRENT_DB_PATH/$selected_table" ]]
-then
-    data_file="$CURRENT_DB_PATH/$selected_table"
-else 
-    echo "The selected table is empty."
-    echo ""
-    read -rp "Press Enter to continue..."
-    source ./menu/db_menu.sh
-fi
-# 2. Show all available fields in the table
-available_fields=$(awk -F: '{print $1}' "$meta_file")
+data_file="$CURRENT_DB_PATH/$selected_table"
 
-select field in $available_fields; do
-    if [[ -n "$field" ]]; then
-        selected_field="$field"
-        echo "You selected: $selected_field"
-        read -p "Enter the value for $selected_field: " search_value
-        
-        # Display data from data_file based on meta_file definitions
-        awk -F: -v field="$selected_field" -v value="$search_value" '
-        BEGIN {
-            print "====================================="
-            print "Matching records for [" field " = " value "]:"
-            print "====================================="
-            OFS="\t"
-        }
-        
-        NR == FNR {
-            fields[FNR] = $1  # Save field name for headers
-            if ($1 == field) {
-                field_num = FNR
-            }
-            next
-        }
-        
-        FNR == 1 {
-            for (i=1; i<=length(fields); i++) {
-                printf "%s\t", fields[i]
-            }
-            print "\n-------------------------------------"
-        }
-        
-        {   
-            if ($field_num ~ value) {
-                for (i=1; i<=NF; i++) {
-                    printf "%s\t", $i
-                }
-                print ""
-                match_count++
-            }
-        }
-        
-        END {
-            if (match_count == 0) {
-                print "(No matching records found)"
-            }
-            print "====================================="
-        }
-        ' "$meta_file" "$data_file"
-        
+if [[ ! -f "$data_file" ]]; then
+    gui_error "The selected table is empty or missing."
+    return
+fi
+
+# ── 3. Pick field to search on ─
+field_list=()
+while IFS=: read -r col_name col_type is_pk; do
+    [[ -z "$col_name" ]] && continue
+    field_list+=("FALSE" "$col_name")
+done < "$meta_file"
+
+selected_field=$(zenity --list \
+    --title="Select — $selected_table" \
+    --text="Choose a field to search by:" \
+    --radiolist \
+    --column="Select" --column="Field" \
+    --width=380 --height=360 \
+    "${field_list[@]}" 2>/dev/null)
+
+[[ $? -ne 0 || -z "$selected_field" ]] && return
+
+# ── 4. Enter search value ─────────────────────────────────────
+search_value=$(gui_entry \
+    "Select — $selected_table" \
+    "Field: <b>$selected_field</b>\n\nEnter value to search for:")
+[[ $? -ne 0 ]] && return
+
+# ── 5. Run the  awk query ─────────────────────
+# Collect column headers
+col_headers=()
+while IFS=: read -r col_name _rest; do
+    [[ -n "$col_name" ]] && col_headers+=("$col_name")
+done < "$meta_file"
+
+# Find field index
+field_num=0
+idx=0
+while IFS=: read -r col_name _rest; do
+    [[ -z "$col_name" ]] && continue
+    idx=$(( idx + 1 ))
+    if [[ "$col_name" == "$selected_field" ]]; then
+        field_num=$idx
         break
-    else
-        echo "Invalid selection. Please try again."
     fi
+done < "$meta_file"
+
+# Collect matching rows
+match_rows=()
+while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    IFS=: read -ra fields <<< "$line"
+    cell="${fields[$((field_num-1))]}"
+    if [[ "$cell" == *"$search_value"* ]]; then
+        for f in "${fields[@]}"; do
+            match_rows+=("$f")
+        done
+    fi
+done < "$data_file"
+
+if [[ ${#match_rows[@]} -eq 0 ]]; then
+    gui_info "No matching records found\nfor [$selected_field = $search_value] in '$selected_table'."
+    return
+fi
+
+# Build --column args
+col_args=()
+for h in "${col_headers[@]}"; do
+    col_args+=("--column=$h")
 done
-echo ""
-read -rp "Press Enter to continue..."
-source ./menu/db_menu.sh
+
+zenity --list \
+    --title="Results: $selected_table  [ $selected_field = $search_value ]" \
+    --text="Matching records in <b>$selected_table</b>  where <b>$selected_field</b> = '$search_value':" \
+    "${col_args[@]}" \
+    --width=700 --height=450 \
+    "${match_rows[@]}" 2>/dev/null
