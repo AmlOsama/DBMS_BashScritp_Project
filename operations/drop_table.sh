@@ -19,7 +19,7 @@ select table_name in "${table_names[@]}" "Cancel"; do
     read -rp "Are you sure you want to drop '$table_name'? (yes/no): " confirm
     if [ "$confirm" = "yes" ]; then
         rm -f "$CURRENT_DB_PATH/$table_name.meta"
-        rm -f "$CURRENT_DB_PATH/$table_name.data"
+        rm -f "$CURRENT_DB_PATH/$table_name"
         echo "✔ Table '$table_name' dropped."
     else
         echo "Cancelled."

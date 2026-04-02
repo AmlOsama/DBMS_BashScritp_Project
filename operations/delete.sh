@@ -61,6 +61,7 @@ awk -F: -v pk="$pk_row" '{ print "Key: " $pk " | Record: " $0 }' "$data_file"
 echo "-----------------------------------"
 
 # 4. Find the Line Number in the Data File
+key_value=""
 while [[ -z "$key_value" ]]; do
     read -p "Enter the Key value of the row you wish to delete, or 'quit' to exit: " key_value
 

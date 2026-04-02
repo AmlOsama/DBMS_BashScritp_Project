@@ -44,6 +44,7 @@ if [[ -z "$pk_row" ]]; then
 fi
 
 # 3. Find the Line Number in the Data File
+key_value=""
 while [[ -z "$key_value" ]]; do
     read -p "Enter the Key value of the row you wish to update, or 'quit' to exit: " key_value
 
